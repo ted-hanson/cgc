@@ -1,5 +1,5 @@
 (($) => {
-  let currencies = [
+  let currencies = [ "CRYPTO",
     "GBP", "AUD", "USD", "BRL", "CAD", "CHF", "CLP", "CNY",
     "CZK", "DKK", "EUR", "HKD", "HUF", "IDR", "ILS", "INR",
     "JPY", "KRW", "MXN", "MYR", "NOK", "NZD", "PHP", "PKR",
@@ -12,26 +12,35 @@
 
   // crypto => currency hash state to be updated from API
   let cryptoToCurrency = {};
-  function loadCurrencies() {
-    return fetch(`https://api.coinmarketcap.com/v1/ticker/?convert=${currencyType}`)
+  function loadCurrencies(type = currencyType) {
+    if (currencies.indexOf(currencyType) < 0) {
+      return Promise.resolve();
+    }
+
+    return fetch(`https://api.coinmarketcap.com/v1/ticker/?convert=${type}`)
       .then((resp) => resp.json())
       .then((cryptos) => {
         cryptos.forEach((crypto) => {
-          cryptoToCurrency[crypto.symbol] = crypto[`price_${currencyType.toLowerCase()}`];
+          if (!cryptoToCurrency[crypto.symbol]) cryptoToCurrency[crypto.symbol] = {};
+
+          cryptoToCurrency[crypto.symbol][type] = crypto[`price_${type.toLowerCase()}`];
         });
       })
       .catch((e) => console.warn(e));
   }
-  // reload currencies every 10 seconds
-  setInterval(loadCurrencies, 10000);
 
   function updateRow(targetRow) {
     if (targetRow.hasClass('converted')) return;
     targetRow.addClass('converted');
 
     let crypto = targetRow.children().eq(3).text().trim();
-    let currencyVal = cryptoToCurrency[crypto];
-    if (!currencyVal) return;
+    if (!cryptoToCurrency[crypto]) return;
+
+    let currencyVal = cryptoToCurrency[crypto][currencyType];
+    if (!currencyVal) {
+      setTimeout(() => updateRow(targetRow), 1000 + 9000 * Math.random());
+      return;
+    }
 
     let bet = targetRow.find('.text-right');
     let amt = parseFloat(bet.text()) * currencyVal;
@@ -52,7 +61,7 @@
   loadCurrencies().then(updateTables);
 
   function currencySelector() {
-    let select = $("<select style='position: fixed; right: 0; bottom: 0; color: black; z-index: 999999'>");
+    let select = $("<select style='font-size: 30px; position: fixed; right: 0; bottom: 0; color: black; z-index: 999999'>");
     currencies.forEach((cur, i) => {
       let newOption = $('<option>').val(i).html(cur);
       select.append(newOption);
@@ -60,10 +69,12 @@
     select.val(currencies.indexOf(currencyType));
     select.on('change', () => {
       let newCurrency = currencies[select.val()];
-      loadCurrencies(newCurrency).then(() => {
-        $.cookie('currencyType', currencies.indexOf(newCurrency));
-        currencyType = newCurrency;
-      });
+      loadCurrencies(newCurrency)
+        .then(() => {
+          $.cookie('currencyType', currencies.indexOf(newCurrency));
+          currencyType = newCurrency;
+        })
+        .catch((e) => console.log(e))
     });
     $('body').prepend(select);
   }
