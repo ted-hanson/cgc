@@ -1,7 +1,7 @@
 {
   "name": "Crypto-Games Currency Converter",
   "description": "Converts coin amounts to the currency of your choice in the live logs as they stream in",
-  "version": "0.1",
+  "version": "0.2",
   "manifest_version": 2,
   "content_scripts": [
     {
