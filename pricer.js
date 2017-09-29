@@ -80,11 +80,14 @@
   }
   currencySelector();
 
-  // Warning if trying to send message
-  window.sendMessage = (msg) => {
-    if (msg.trim().split(' ').length < 2) {
-      if (!confirm("Are you sure you want to submit '${msg}'?")) return;
-    }
-    window.sendMessage(msg);
-  };
+  // Warning if trying to send 1 word message
+  $('[id^=chat_iframe]').each((i, e) => {
+    win = e.contentWindow;
+    win.sendMessage = (msg) => {
+      if (msg.trim().split(' ').length < 2) {
+        if (!confirm(`Are you sure you want to submit '${msg}'?`)) return;
+      }
+      sendMessage(msg);
+    };
+  });
 })(window.jQuery);
