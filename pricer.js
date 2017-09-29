@@ -79,4 +79,12 @@
     $('body').prepend(select);
   }
   currencySelector();
+
+  // Warning if trying to send message
+  window.sendMessage = (msg) => {
+    if (msg.trim().split(' ').length < 2) {
+      if (!confirm("Are you sure you want to submit '${msg}'?")) return;
+    }
+    window.sendMessage(msg);
+  };
 })(window.jQuery);
